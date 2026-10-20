@@ -7,6 +7,11 @@ on:
   
   # 允许手动触发
   workflow_dispatch:
+    inputs:
+      verify_model:
+        description: '额外验证视觉 API（使用智谱官方示例图片）'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -35,6 +40,36 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
           python -m playwright install-deps chromium
+
+      - name: 验证视觉 API
+        if: github.event_name == 'workflow_dispatch' && inputs.verify_model
+        env:
+          BASE_URL: ${{ secrets.BASE_URL }}
+          API_KEY: ${{ secrets.API_KEY }}
+          MODEL: ${{ secrets.MODEL }}
+        run: |
+          python - <<'PY'
+          import os
+          from openai import OpenAI
+          client = OpenAI(
+              base_url=os.environ['BASE_URL'],
+              api_key=os.environ['API_KEY'],
+              timeout=60,
+              max_retries=1,
+          )
+          reply = client.chat.completions.create(
+              model=os.environ['MODEL'],
+              messages=[{'role': 'user', 'content': [
+                  {'type': 'text', 'text': '请简短描述这张图片中的内容。'},
+                  {'type': 'image_url', 'image_url': {
+                      'url': 'https://cdn.bigmodel.cn/static/logo/api-key.png'
+                  }},
+              ]}],
+          )
+          if not reply.choices or not (reply.choices[0].message.content or '').strip():
+              raise RuntimeError('视觉 API 没有返回有效文本')
+          print('视觉 API 调用成功')
+          PY
       
       - name: 运行签到脚本
         env:
