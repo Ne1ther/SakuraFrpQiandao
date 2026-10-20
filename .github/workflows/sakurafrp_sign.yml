@@ -51,14 +51,16 @@ jobs:
           python - <<'PY'
           import os
           from openai import OpenAI
+          def setting(name):
+              return os.environ[name].split('\n')[0].strip()
           client = OpenAI(
-              base_url=os.environ['BASE_URL'],
-              api_key=os.environ['API_KEY'],
+              base_url=setting('BASE_URL'),
+              api_key=setting('API_KEY'),
               timeout=60,
               max_retries=1,
           )
           reply = client.chat.completions.create(
-              model=os.environ['MODEL'],
+              model=setting('MODEL'),
               messages=[{'role': 'user', 'content': [
                   {'type': 'text', 'text': '请简短描述这张图片中的内容。'},
                   {'type': 'image_url', 'image_url': {
