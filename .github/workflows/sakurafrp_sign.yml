@@ -7,10 +7,18 @@ on:
   
   # 允许手动触发
   workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sakurafrp-checkin
+  cancel-in-progress: false
   
 jobs:
   checkin:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     
     steps:
       - name: 检出代码
@@ -40,6 +48,11 @@ jobs:
           HEADLESS: 'true'
         run: |
           python main.py
+          # 上游部分失败路径仍会以 0 退出，必须同时检查成功标记。
+          if ! grep -Fq '✓ 签到流程完成' checkin.log; then
+            echo '::error::未确认签到成功，请查看上方签到日志。'
+            exit 1
+          fi
       
       - name: 发送邮件通知
         if: always()
