@@ -67,7 +67,7 @@ python main.py
 
 ## GitHub Actions 部署
 
-工作流文件位于 `.github/workflows/sakurafrp_sign.yml`，默认每天北京时间 9:00 执行，也支持手动触发。
+工作流文件位于 `.github/workflows/sakurafrp_sign.yml`，每天北京时间 **00:17** 签到、**08:43** 补跑，也支持手动触发。脚本检测到今日已经签到时直接结束，不会重复领取。GitHub 的定时调度可能延迟，两个时间用于降低单次调度遗漏的影响。
 
 需要配置以下 Secrets：
 
@@ -114,7 +114,8 @@ SakuraFrp-Qiandao/
 
 ```yaml
 schedule:
-  - cron: '0 1 * * *'  # UTC 1:00 = 北京时间 9:00
+  - cron: '17 16 * * *'  # UTC 16:17 = 次日北京时间 00:17
+  - cron: '43 0 * * *'   # UTC 00:43 = 北京时间 08:43
 ```
 
 常用时间对照：
@@ -133,6 +134,15 @@ schedule:
 - 可以使用智谱官网的免费视觉模型`GLM-4.6V-Flash`，但有时候高峰期会429，推荐使用`GLM-4.1V-Thinking-Flash`,效果差不多。
 
 ## 故障排查
+
+### 定时任务没有运行
+
+1. 在仓库 **Actions → SakuraFrp 自动签到** 中确认工作流已启用。公开仓库 fork 后需要启用工作流；连续 60 天没有仓库活动也可能被 GitHub 自动停用。
+2. 确认工作流位于仓库默认分支，cron 使用 UTC。修改其他分支不会改变定时执行。
+3. 查看运行列表的触发方式：`schedule` 才表示定时触发，`workflow_dispatch` 只表示手动触发。每次运行摘要也会记录触发来源和开始时间。
+4. 如果手动运行成功、长期没有 `schedule` 记录，可先停用再启用该工作流，并在默认分支提交一次 cron 修改，再等待实际定时事件验证。手动运行成功不能证明定时已经恢复。
+
+参考：[GitHub 定时调度说明](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)、[启用和停用工作流](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/disable-and-enable-workflows)。
 
 ### 验证码识别失败
 
