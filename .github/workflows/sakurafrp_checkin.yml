@@ -7,8 +7,6 @@ on:
   schedule:
     - cron: '17 16 * * *'
     - cron: '43 0 * * *'
-    # 临时调度探针：只检查 schedule 事件，不登录、不调用模型，验证后移除。
-    - cron: '*/5 13-14 26 10 *'
   
   # 允许手动触发
   workflow_dispatch:
@@ -26,16 +24,7 @@ concurrency:
   cancel-in-progress: false
   
 jobs:
-  schedule-probe:
-    if: github.event_name == 'schedule' && github.event.schedule == '*/5 13-14 26 10 *'
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    steps:
-      - name: 验证定时调度
-        run: echo 'GitHub schedule 事件已正常触发' >> "$GITHUB_STEP_SUMMARY"
-
   checkin:
-    if: github.event_name != 'schedule' || github.event.schedule != '*/5 13-14 26 10 *'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     
