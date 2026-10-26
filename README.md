@@ -67,7 +67,7 @@ python main.py
 
 ## GitHub Actions 部署
 
-工作流文件位于 `.github/workflows/sakurafrp_sign.yml`，每天北京时间 **00:17** 签到、**08:43** 补跑，也支持手动触发。脚本检测到今日已经签到时直接结束，不会重复领取。GitHub 的定时调度可能延迟，两个时间用于降低单次调度遗漏的影响。
+工作流文件位于 `.github/workflows/sakurafrp_checkin.yml`，每天北京时间 **00:17** 签到、**08:43** 补跑，也支持手动触发。脚本检测到今日已经签到时直接结束，不会重复领取。GitHub 的定时调度可能延迟，两个时间用于降低单次调度遗漏的影响。
 
 需要配置以下 Secrets：
 
@@ -95,7 +95,7 @@ Actions 使用 GitHub runner 自带 Chrome，并执行 `python -m playwright ins
 
 ```text
 SakuraFrp-Qiandao/
-├── .github/workflows/sakurafrp_sign.yml
+├── .github/workflows/sakurafrp_checkin.yml
 ├── automation.py          # Playwright 签到主流程
 ├── captcha_handler.py     # GeeTest 验证码识别和点击
 ├── config.py              # 环境变量和日志配置
@@ -110,7 +110,7 @@ SakuraFrp-Qiandao/
 
 ### 定时任务时间
 
-修改 `.github/workflows/sakurafrp_sign.yml` 中的 cron 表达式：
+修改 `.github/workflows/sakurafrp_checkin.yml` 中的 cron 表达式：
 
 ```yaml
 schedule:
