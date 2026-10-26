@@ -1,9 +1,14 @@
 name: SakuraFrp 自动签到
+run-name: SakuraFrp · ${{ github.event_name }} · ${{ github.event.schedule || 'manual' }}
 
 on:
-  # 定时任务：每天北京时间 00:10 执行（前一日 UTC 16:10），避开整点调度高峰
+  # 每天北京时间 00:17 签到，08:43 补跑；错开整点调度高峰。
+  # 脚本检测到今日已签到时直接结束，不会再次领取。
   schedule:
-    - cron: '10 16 * * *'
+    - cron: '17 16 * * *'
+    - cron: '43 0 * * *'
+    # 临时调度探针：只检查 schedule 事件，不登录、不调用模型，验证后移除。
+    - cron: '44 13 26 10 *'
   
   # 允许手动触发
   workflow_dispatch:
@@ -21,11 +26,32 @@ concurrency:
   cancel-in-progress: false
   
 jobs:
+  schedule-probe:
+    if: github.event_name == 'schedule' && github.event.schedule == '44 13 26 10 *'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: 验证定时调度
+        run: echo 'GitHub schedule 事件已正常触发' >> "$GITHUB_STEP_SUMMARY"
+
   checkin:
+    if: github.event_name != 'schedule' || github.event.schedule != '44 13 26 10 *'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     
     steps:
+      - name: 记录触发来源
+        env:
+          TRIGGER_EVENT: ${{ github.event_name }}
+          TRIGGER_SCHEDULE: ${{ github.event.schedule }}
+        run: |
+          {
+            echo "### SakuraFrp 签到"
+            echo "- 触发方式：$TRIGGER_EVENT"
+            echo "- 定时表达式：${TRIGGER_SCHEDULE:-manual}"
+            echo "- 开始时间：$(TZ=Asia/Shanghai date '+%F %T %Z')"
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: 检出代码
         uses: actions/checkout@v4
       
